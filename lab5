@@ -1,0 +1,133 @@
+package KI306.Kutsan.Lab5;
+
+import java.io.*;
+import java.util.Scanner;
+
+/**
+ * Application class for computing and handling file I/O for the expression y = cos(x) / tan(2x)
+ */
+public class EquationApp {
+    public static void main(String[] args) {
+        try {
+            System.out.print("Enter file name for output: ");
+            Scanner in = new Scanner(System.in);
+            String fileName = in.nextLine();
+            CalcWithIO calc = new CalcWithIO();
+
+            System.out.print("Enter x (in degrees): ");
+            double x = in.nextDouble();
+
+            try {
+                calc.calculate(x);
+                System.out.println("Result: " + calc.getResult());
+
+                calc.writeResultToText(fileName + ".txt");
+                calc.writeResultToBinary(fileName + ".bin");
+
+                System.out.println("Reading results back:");
+                calc.readResultFromText(fileName + ".txt");
+                System.out.println("Text result: " + calc.getResult());
+
+                calc.readResultFromBinary(fileName + ".bin");
+                System.out.println("Binary result: " + calc.getResult());
+
+            } catch (CalcException e) {
+                System.err.println("Calculation error: " + e.getMessage());
+            }
+        } catch (IOException e) {
+            System.err.println("File error: " + e.getMessage());
+        }
+    }
+}
+
+/**
+ * Custom exception class for handling calculation errors.
+ */
+class CalcException extends Exception {
+    public CalcException(String message) {
+        super(message);
+    }
+}
+
+/**
+ * Class for calculating the expression and handling file I/O.
+ */
+class CalcWithIO {
+    private double result;
+
+    /**
+     * Calculates the expression y = cos(x) / tan(2x)
+     * @param x the angle in degrees
+     * @throws CalcException if the input or computation is invalid
+     */
+    public void calculate(double x) throws CalcException {
+        double radians = Math.toRadians(x);
+        double tan2x = Math.tan(2 * radians);
+
+        if (tan2x == 0) {
+            throw new CalcException("Invalid input: tan(2x) is undefined or zero.");
+        }
+
+        result = Math.cos(radians) / tan2x;
+
+        if (Double.isNaN(result) || Double.isInfinite(result)) {
+            throw new CalcException("Calculation resulted in an undefined value.");
+        }
+    }
+
+    /**
+     * Gets the result of the calculation.
+     * @return the result
+     */
+    public double getResult() {
+        return result;
+    }
+
+    /**
+     * Writes the result to a text file.
+     * @param fileName the name of the text file
+     * @throws IOException if an I/O error occurs
+     */
+    public void writeResultToText(String fileName) throws IOException {
+        try (PrintWriter writer = new PrintWriter(new File(fileName))) {
+            writer.println(result);
+        }
+    }
+
+    /**
+     * Reads the result from a text file.
+     * @param fileName the name of the text file
+     * @throws IOException if an I/O error occurs
+     */
+    public void readResultFromText(String fileName) throws IOException {
+        try (Scanner scanner = new Scanner(new File(fileName))) {
+            if (scanner.hasNextDouble()) {
+                result = scanner.nextDouble();
+            } else {
+                throw new IOException("Invalid data in text file.");
+            }
+        }
+    }
+
+    /**
+     * Writes the result to a binary file.
+     * @param fileName the name of the binary file
+     * @throws IOException if an I/O error occurs
+     */
+    public void writeResultToBinary(String fileName) throws IOException {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(fileName))) {
+            dos.writeDouble(result);
+        }
+    }
+
+    /**
+     * Reads the result from a binary file.
+     * @param fileName the name of the binary file
+     * @throws IOException if an I/O error occurs
+     */
+    public void readResultFromBinary(String fileName) throws IOException {
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(fileName))) {
+            result = dis.readDouble();
+        }
+    }
+}
